@@ -473,7 +473,7 @@ def ForecastData(begin=0):
     print("预测直选结果：")
     Guess(begin, begin + 100, int(repeace), bigsmall, oddeven, ts, 0, st, nd, rd, bss, oes)
     print("预测组选结果：")
-    Guess(begin, begin + 100, int(repeace), bigsmall, oddeven, ts, 0, st, nd, rd, bss, oes)
+    Guess(begin, begin + 100, int(repeace), bigsmall, oddeven, ts, 1, st, nd, rd, bss, oes)
 
 if __name__ == "__main__":
     while True:
