@@ -6,6 +6,7 @@ import helper.SqliteHelper as sh
 from decimal import Decimal
 import random
 import math
+import helper.AlgorithmHelper as ah
 
 db_file = "database\pl3.db"
 
@@ -180,19 +181,26 @@ def crawler():
     _db.close()
     parse_one_page(get_page())
 
-def replaceCount(begin=0, index=0):
+def replaceCount(begin=0, index=0, step=1, ai=0, col="SortData"):
     _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     _pridata = [0] * 1000
     sumcount = 0
-    for i in range(begin, index):
-        _pridata[int(_data[i]['SortData'])] += 1
-    for i in range(begin, index):
+    for i in range(begin, index, step):
+        _pridata[int(_data[i][col])] += 1
+    for i in range(1000):
         if _pridata[i] > 1:
             sumcount += _pridata[i]
+    # for i in range(begin, index, step):
+    #     print( _data[i]['SortData'],  _pridata[int(_data[i]['SortData'])])
+    # print("---------------------------------------------")
     _db.close()
     # str(Decimal((scnt[i] / (cnt * 3)) * 100).quantize(Decimal("0.00")))
-    return str(Decimal((sumcount / (index - begin)) * 100).quantize(Decimal("0.00")))
+    if ai == 0:
+        return str(Decimal((sumcount / abs(index - begin)) * 100).quantize(Decimal("0.00")))
+    else:
+        return sumcount / abs(index - begin) * 100
+    
 
 def CalBSaOE(begin=0, index=0, strChose="BS"):
     _db = sh.Connect(db_file)
@@ -465,10 +473,15 @@ def intCheck36(num):
 
 def ProcessData(begin=0):
     print("-------------------------------------------")
-    print("近100期重复率:" + str(replaceCount(begin, begin + 100)) + "%")
-    print("近50期重复率:" + str(replaceCount(begin, begin + 50)) + "%")
-    print("近30期重复率:" + str(replaceCount(begin, begin + 30)) + "%")
-    print("近10期重复率:" + str(replaceCount(begin, begin + 10)) + "%")
+    print("近100期原始重复率:" + str(replaceCount(begin, begin + 100, 1, 0, "OriData")) + "%")
+    print("近50期原始重复率:" + str(replaceCount(begin, begin + 50, 1, 0, "OriData")) + "%")
+    print("近30期原始重复率:" + str(replaceCount(begin, begin + 30, 1, 0, "OriData")) + "%")
+    print("近10期原始重复率:" + str(replaceCount(begin, begin + 10, 1, 0, "OriData")) + "%")
+    print("")
+    print("近100期有序重复率:" + str(replaceCount(begin, begin + 100)) + "%")
+    print("近50期有序重复率:" + str(replaceCount(begin, begin + 50)) + "%")
+    print("近30期有序重复率:" + str(replaceCount(begin, begin + 30)) + "%")
+    print("近10期有序重复率:" + str(replaceCount(begin, begin + 10)) + "%")
     print("")
     # print("总智能重复率:" + str(smartCount()) + "%")
     # print("")
@@ -524,10 +537,22 @@ def ForecastData(begin=0):
     print("预测组选结果：")
     Guess(begin, begin + 100, int(repeace), bigsmall, oddeven, ts, 1, st, nd, rd, bss, oes)
 
+def CalMK():
+    _db = sh.Connect(db_file)
+    _data = _db.table('pl3').findAll()
+    maxlength = len(_data)
+    if maxlength % 10 > 0:
+        maxlength -= maxlength % 100
+    mklist = []
+    for i in range(maxlength, 99, -100):
+        mklist.append(replaceCount(i, i - 101, -1, 1))
+    print(ah.mk_test(mklist))
+    _db.close()
+
 if __name__ == "__main__":
     while True:
         print("")
-        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n9.退出\n")
+        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.重复趋向性测试\n9.退出\n")
         if select == "1":
             crawler()
             print("-------------------------------------------")
@@ -541,5 +566,7 @@ if __name__ == "__main__":
         elif select == "5":
             num = int(input("输入预测期数："))
             ForecastData(num)
+        elif select == "6":
+            CalMK()
         elif select == "9":
             break
