@@ -545,7 +545,7 @@ def CalMK():
         maxlength -= maxlength % 100
     mklist = []
     for i in range(maxlength, 99, -100):
-        mklist.append(replaceCount(i, i - 101, -1, 1))
+        mklist.append(replaceCount(i, i - 101, -1, 1, "OriData"))
     print(ah.mk_test(mklist))
     _db.close()
 
