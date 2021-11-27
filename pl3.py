@@ -2,13 +2,15 @@ import requests
 from requests.exceptions import RequestException
 import csv
 from bs4 import BeautifulSoup as bs
-import SqliteHelper as sh
+import helper.SqliteHelper as sh
 from decimal import Decimal
 import random
 import math
 
+db_file = "database\pl3.db"
+
 def write_to_file(item):
-    file_name = "PLS.csv"
+    file_name = "tempfile\PLS.csv"
     # "a"为追加模式（添加）
     # utf_8_sig格式导出csv不乱码
     with open(file_name, "a", encoding="utf_8_sig", newline="") as f:
@@ -57,7 +59,7 @@ def parse_html(html):
             pass             
 
 def parse_one_page(get_html):
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     plsData = []
     if get_html is not None:
         print("正在写入...")
@@ -172,14 +174,14 @@ def getMaxPage(get_html):
     return len(ans)
 
 def crawler():
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _db.table('pl3').delete()
     _db.table("sqlite_sequence").save({"seq": '0'})
     _db.close()
     parse_one_page(get_page())
 
 def replaceCount(begin=0, index=0):
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     _pridata = [0] * 1000
     sumcount = 0
@@ -193,7 +195,7 @@ def replaceCount(begin=0, index=0):
     return str(Decimal((sumcount / (index - begin)) * 100).quantize(Decimal("0.00")))
 
 def CalBSaOE(begin=0, index=0, strChose="BS"):
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     ans = [0] * 4
     for i in range(begin, index):
@@ -235,7 +237,7 @@ def BtoD(num):
     return ans
 
 def CalBSSaOES(begin, index, strChose="BSS"):
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _data = _db.table("pl3").findAll()
     ans = [0] * 8
     strans = ""
@@ -250,7 +252,7 @@ def CalBSSaOES(begin, index, strChose="BSS"):
     return strans
 
 def CalTS(begin=0, index=0):
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     ans = [0] * 3
     for i in range(begin, index):
@@ -266,7 +268,7 @@ def CalTS(begin=0, index=0):
 
 def smartCount():
     smartList = [27,35,37,38,45,47,56,57,58,67,78,126,129,136,138,156,167,236,238,239,249,256,259,267,269,346,347,348,349,356]
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     sumcount = 0
     for i in range(len(_data)):
@@ -276,7 +278,7 @@ def smartCount():
     return round(sumcount / len(_data), 4) * 100
 
 def CalCurrent(n):
-    _db = sh.Connect("pl3.db")
+    _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     currentdata = _data[n]
     sortcnt = 0
@@ -299,6 +301,7 @@ def CalCurrent(n):
             else:
                 tsp[2] += 1
     print("第" + str(n + 1) + "期数值： " + currentdata["OriData"])
+    print("上期数据为:" + str(_data[n + 1]['OriData']))
     print("往期共出现" + str(sortcnt) + "次，相邻期分析如下:")
     print("大小比： " + "0:3 占比 " + str(Decimal(bsp[0] / sortcnt * 100).quantize(Decimal("0.00"))) + "%" + ", 1:2 占比 " + str(Decimal(bsp[1] / sortcnt * 100).quantize(Decimal("0.00"))) + "%" + ", 2:1 占比 " + str(Decimal(bsp[2] / sortcnt * 100).quantize(Decimal("0.00"))) + "%" + ", 3:0 占比 " + str(Decimal(bsp[3] / sortcnt * 100).quantize(Decimal("0.00"))) + "%")
     print("奇偶比： " + "0:3 占比 " + str(Decimal(oep[0] / sortcnt * 100).quantize(Decimal("0.00"))) + "%" + ", 1:2 占比 " + str(Decimal(oep[1] / sortcnt * 100).quantize(Decimal("0.00"))) + "%" + ", 2:1 占比 " + str(Decimal(oep[2] / sortcnt * 100).quantize(Decimal("0.00"))) + "%" + ", 3:0 占比 " + str(Decimal(oep[3] / sortcnt * 100).quantize(Decimal("0.00"))) + "%")
@@ -318,9 +321,15 @@ def CalCurrent(n):
     _db.close()
 
 def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted=0, st=[], nd=[], rd=[], bss=[], oes=[]):
+    # 容错处理
+    for i in range(len(tsp)):
+        if tsp[i] == 3:
+            tsp[i] = 1
+        elif tsp[i] == 6:
+            tsp[i] = 2
     _data = [1] * 1000
     if replace > 0:
-        _db = sh.Connect("pl3.db")
+        _db = sh.Connect(db_file)
         _used = _db.table('pl3').findAll()
         if index == -1:
             index = len(_used)
@@ -397,22 +406,62 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
                 _data[i] = 0
     strans = ""
     cnt = 0
+    cnts = [0] * 3
     scnt = [0] * 10
+    stranss = [""] * 3
     for i in range(1000):
         if _data[i] == 1:
             scnt[i // 100] += 1
             scnt[i // 10 % 10] += 1
             scnt[i % 10] += 1
             strans += str(i) + " "
+            if intCheck36(i) == 0:
+                stranss[0] += str(i) + " "
+                cnts[0] += 1
+            elif intCheck36(i) == 1:
+                stranss[1] += str(i) + " "
+                cnts[1] += 1
+            elif intCheck36(i) == 2:
+                stranss[2] += str(i) + " "
+                cnts[2] += 1
             cnt += 1
-    print("猜测结果共：" + str(cnt) + "个")
-    print(strans)
     if sorted == 1:
-        print("组选推荐：")
-        scnt.sort(reverse=True)
-        for i in range(10):
-            if scnt[i] > 0:
-                print(str(i) + " " + str(scnt[i]) + " " + str(Decimal((scnt[i] / (cnt * 3)) * 100).quantize(Decimal("0.00"))) + "%")
+        for ci in tsp:
+            strci = ""
+            if ci == 0:
+                strci = "豹子"
+            elif ci == 1:
+                strci = "组合3"
+            elif ci == 2:
+                strci = "组合6"
+            print("组选" + strci + "推荐：")
+            print("猜测结果共：" + str(cnts[ci]) + "个:")
+            print(stranss[ci])
+            
+    else:     
+        print("猜测结果共：" + str(cnt) + "个:")
+        print(strans)
+    # if sorted == 1:
+    #     scnt.sort(reverse=True)
+    #     for i in range(10):
+    #         if scnt[i] > 0:
+    #             print(str(i) + " " + str(scnt[i]) + " " + str(Decimal((scnt[i] / (cnt * 3)) * 100).quantize(Decimal("0.00"))) + "%")
+
+def intCheck36(num):
+    strnum = str(num)
+    if len(strnum) == 1:
+        strnum = "00" + strnum
+    elif len(strnum) == 2:
+        strnum = "0" + strnum
+    ans = [0] * 10
+    for i in range(3):
+        ans[int(strnum[i])] += 1
+    for i in range(3):
+        if ans[i] == 3:
+            return 0
+        elif ans[i] == 2:
+            return 1
+    return 2
 
 def ProcessData(begin=0):
     print("-------------------------------------------")
