@@ -186,6 +186,8 @@ def replaceCount(begin=0, index=0, step=1, ai=0, col="SortData"):
     _data = _db.table('pl3').findAll()
     _pridata = [0] * 1000
     sumcount = 0
+    if step == -1:
+        index -= 1
     for i in range(begin, index, step):
         _pridata[int(_data[i][col])] += 1
     for i in range(1000):
@@ -202,11 +204,13 @@ def replaceCount(begin=0, index=0, step=1, ai=0, col="SortData"):
         return sumcount / abs(index - begin) * 100
     
 
-def CalBSaOE(begin=0, index=0, strChose="BS"):
+def CalBSaOE(begin=0, index=0, step=1, strChose="BS", ai=0):
     _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     ans = [0] * 4
-    for i in range(begin, index):
+    if step == -1:
+        index -= 1
+    for i in range(begin, index, step):
         tmp = _data[i][strChose].split(':')
         # print(tmp)
         if tmp[0] == '0':
@@ -218,9 +222,13 @@ def CalBSaOE(begin=0, index=0, strChose="BS"):
         else:   
             ans[3] += 1
     # Decimal(ans[0] / index * 100).quantize(Decimal("0.00"))
-    strans = ("0:3 占比 " + str(Decimal(ans[0] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 1:2 占比 " + str(Decimal(ans[1] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 2:1 占比 " + str(Decimal(ans[2] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 3:0 占比 " + str(Decimal(ans[3] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%")
+    strans = ("0:3 占比 " + str(Decimal(ans[0] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 1:2 占比 " + str(Decimal(ans[1] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 2:1 占比 " + str(Decimal(ans[2] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 3:0 占比 " + str(Decimal(ans[3] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%")
     _db.close()
-    return strans
+    if ai == 0:
+        return strans
+    else:
+        strans = [ans[0] / abs(index - begin) * 100, ans[1] / abs(index - begin) * 100, ans[2] / abs(index - begin) * 100, ans[3] / abs(index - begin) * 100]
+        return strans
 
 def DtoB(num):
     i = 0
@@ -486,15 +494,15 @@ def ProcessData(begin=0):
     # print("总智能重复率:" + str(smartCount()) + "%")
     # print("")
     # 大：小
-    print("近100期大小比：" + str(CalBSaOE(begin, begin + 100, "BS")))
-    print("近50期大小比：" + str(CalBSaOE(begin, begin + 50, "BS")))
-    print("近30期大小比：" + str(CalBSaOE(begin, begin + 30, "BS")))
-    print("近10期大小比：" + str(CalBSaOE(begin, begin + 10, "BS")))
+    print("近100期大小比：" + str(CalBSaOE(begin, begin + 100, 1, "BS", 0)))
+    print("近50期大小比：" + str(CalBSaOE(begin, begin + 50, 1, "BS", 0)))
+    print("近30期大小比：" + str(CalBSaOE(begin, begin + 30, 1, "BS", 0)))
+    print("近10期大小比：" + str(CalBSaOE(begin, begin + 10, 1, "BS", 0)))
     print("")
-    print("近100期奇偶比：" + str(CalBSaOE(begin, begin + 100, "OE")))
-    print("近50期奇偶比：" + str(CalBSaOE(begin, begin + 50, "OE")))
-    print("近30期奇偶比：" + str(CalBSaOE(begin, begin + 30, "OE")))
-    print("近10期奇偶比：" + str(CalBSaOE(begin, begin + 10, "OE")))
+    print("近100期奇偶比：" + str(CalBSaOE(begin, begin + 100, 1, "BS", 0)))
+    print("近50期奇偶比：" + str(CalBSaOE(begin, begin + 50, 1, "BS", 0)))
+    print("近30期奇偶比：" + str(CalBSaOE(begin, begin + 30, 1, "BS", 0)))
+    print("近10期奇偶比：" + str(CalBSaOE(begin, begin + 10, 1, "BS", 0)))
     print("")
     print("近100期36比：" + str(CalTS(begin, begin + 100)))
     print("近50期36比：" + str(CalTS(begin, begin + 50)))
@@ -545,14 +553,18 @@ def CalMK():
         maxlength -= maxlength % 100
     mklist = []
     for i in range(maxlength, 99, -100):
-        mklist.append(replaceCount(i, i - 101, -1, 1, "OriData"))
+        # mklist.append(replaceCount(i, i - 100, -1, 1, "OriData"))
+        items = CalBSaOE(i, i - 100, -1, "BS", 1)
+        # for item in items:
+        #     mklist.append(item)
+        mklist.append(items[0])
     print(ah.mk_test(mklist))
     _db.close()
 
 if __name__ == "__main__":
     while True:
         print("")
-        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.重复趋向性测试\n9.退出\n")
+        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性测试\n9.退出\n")
         if select == "1":
             crawler()
             print("-------------------------------------------")
