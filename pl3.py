@@ -547,13 +547,13 @@ def ForecastData(begin=0):
 def CalMK(index=0):
     _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
-    maxlength = len(_data) - index
+    maxlength = len(_data)
     # if maxlength % 10 > 0:
     #     maxlength -= maxlength % 10
-    maxlength = (maxlength // 10 * 10) + index
+    maxlength = (maxlength // 10 * 10)
     mklist = []
     mkrlist = []
-    for i in range(maxlength, -1 + index, -10):
+    for i in range(maxlength, 9 + index, -1):
         # mklist.append(replaceCount(i, i - 100, -1, 1, "OriData"))
         # items = CalBSaOE(i, i - 100, -1, "BS", 1)
         # for item in items:
@@ -571,10 +571,21 @@ def CalMK(index=0):
     pt.TorchProcess(mkplist, 10)
     _db.close()
 
+def CalMKP(index=0):
+    _db = sh.Connect(db_file)
+    _data = _db.table('pl3').findAll()
+    maxlength = len(_data)
+    maxlength = (maxlength // 10 * 10)
+    mkplist = []
+    for i in range(9, -1, -1):
+        mkplist.append(int(_data[i + index]["OriData"][0]))
+    pt.TorchProcess(mkplist, 10)
+    _db.close()  
+
 if __name__ == "__main__":
     while True:
         print("")
-        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性测试\n9.退出\n")
+        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性模型计算\n7.趋向性模型模拟\n9.退出\n")
         if select == "1":
             crawler()
             print("-------------------------------------------")
@@ -591,5 +602,8 @@ if __name__ == "__main__":
         elif select == "6":
             num = int(input("输入预测期数："))
             CalMK(num)
+        elif select == "7":
+            num = int(input("输入预测期数："))
+            CalMKP(num)
         elif select == "9":
             break

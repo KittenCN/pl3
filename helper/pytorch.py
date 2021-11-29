@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 modelPath = "helper/model/model_parameter.pkl"
+isGPU = True if torch.cuda.is_available() else False
 
 # -----------------------------------
 # 定义网络模型
@@ -17,7 +18,10 @@ class net(nn.Module):
         self.layer1 = nn.LSTM(input_size, hidden_size, num_layer)
         # self.layer2 = nn.Linear(hidden_size, output_size)
         linear = nn.Linear(hidden_size, output_size)
-        self.layer2 = linear.cuda()
+        if isGPU:
+            self.layer2 = linear.cuda()
+        else:
+            self.layer2 = linear
         self.layer3 = nn.Softmax()
 
     def forward(self, x):
@@ -58,12 +62,14 @@ def TorchCal(x, y, data_length, seq_length):
 
     # 将输入数据归一化
     data_x = torch.from_numpy(data_x / float(data_length)).float()
-    data_x = data_x.cuda()
+    if isGPU:
+        data_x = data_x.cuda()
 
     # scatter_函数使用来转换onehot编码
     # 将输出数据设置为one-hot编码
     data_y = torch.zeros(len(li_y), data_length).scatter_(1, torch.tensor(li_y).unsqueeze_(dim=1), 1).float()
-    data_y = data_y.cuda()
+    if isGPU:
+        data_y = data_y.cuda()
 
     model = net(seq_length, 32, data_length, 4)
 
@@ -88,7 +94,7 @@ def TorchCal(x, y, data_length, seq_length):
     #     print("{} -> {}".format(target.argmax().data, pred.argmax().data))
 
     # 开始训练1000轮
-    for _ in range(100):
+    for _ in range(50):
         output = model(data_x)
         loss = loss_fun(data_y, output)
         optimizer.zero_grad()
@@ -112,7 +118,8 @@ def TorchCal(x, y, data_length, seq_length):
 def TorchProcess(x, data_length):
     data_x = numpy.reshape(x, (len(x), 1, 1))
     data_x = torch.from_numpy(data_x / float(data_length)).float()
-    data_x = data_x.cuda()
+    if isGPU:
+        data_x = data_x.cuda()
     model = torch.load(modelPath)
     result = model(data_x)
     print(result)
