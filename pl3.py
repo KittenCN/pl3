@@ -6,12 +6,13 @@ import helper.SqliteHelper as sh
 from decimal import Decimal
 import random
 import math
-import helper.AlgorithmHelper as ah
+# import helper.AlgorithmHelper as ah
+import helper.pytorch as pt
 
-db_file = "database\pl3.db"
+db_file = "database/pl3.db"
 
 def write_to_file(item):
-    file_name = "tempfile\PLS.csv"
+    file_name = "tempfile/PLS.csv"
     # "a"为追加模式（添加）
     # utf_8_sig格式导出csv不乱码
     with open(file_name, "a", encoding="utf_8_sig", newline="") as f:
@@ -201,8 +202,7 @@ def replaceCount(begin=0, index=0, step=1, ai=0, col="SortData"):
     if ai == 0:
         return str(Decimal((sumcount / abs(index - begin)) * 100).quantize(Decimal("0.00")))
     else:
-        return sumcount / abs(index - begin) * 100
-    
+        return sumcount / abs(index - begin) * 100    
 
 def CalBSaOE(begin=0, index=0, step=1, strChose="BS", ai=0):
     _db = sh.Connect(db_file)
@@ -453,7 +453,6 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
             print("组选" + strci + "推荐：")
             print("猜测结果共：" + str(cnts[ci]) + "个:")
             print(stranss[ci])
-            
     else:     
         print("猜测结果共：" + str(cnt) + "个:")
         print(strans)
@@ -545,20 +544,31 @@ def ForecastData(begin=0):
     print("预测组选结果：")
     Guess(begin, begin + 100, int(repeace), bigsmall, oddeven, ts, 1, st, nd, rd, bss, oes)
 
-def CalMK():
+def CalMK(index=0):
     _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
-    maxlength = len(_data)
-    if maxlength % 10 > 0:
-        maxlength -= maxlength % 100
+    maxlength = len(_data) - index
+    # if maxlength % 10 > 0:
+    #     maxlength -= maxlength % 10
+    maxlength = (maxlength // 10 * 10) + index
     mklist = []
-    for i in range(maxlength, 99, -100):
+    mkrlist = []
+    for i in range(maxlength, -1 + index, -10):
         # mklist.append(replaceCount(i, i - 100, -1, 1, "OriData"))
-        items = CalBSaOE(i, i - 100, -1, "BS", 1)
+        # items = CalBSaOE(i, i - 100, -1, "BS", 1)
         # for item in items:
         #     mklist.append(item)
-        mklist.append(items[0])
-    print(ah.mk_test(mklist))
+        tmplist = []
+        for j in range(10):
+            tmplist.append(int(_data[i - j]["OriData"][0]))
+        mklist.append(tmplist)
+        mkrlist.append(int(_data[i - 10]["OriData"][0]))
+    # print(ah.mk_test(mklist))
+    pt.TorchCal(mklist, mkrlist, maxlength, 10)
+    mkplist = []
+    for i in range(9, -1, -1):
+        mkplist.append(int(_data[i + index]["OriData"][0]))
+    pt.TorchProcess(mkplist, 10)
     _db.close()
 
 if __name__ == "__main__":
@@ -579,6 +589,7 @@ if __name__ == "__main__":
             num = int(input("输入预测期数："))
             ForecastData(num)
         elif select == "6":
-            CalMK()
+            num = int(input("输入预测期数："))
+            CalMK(num)
         elif select == "9":
             break
