@@ -8,6 +8,8 @@ import random
 import math
 # import helper.AlgorithmHelper as ah
 import helper.pytorch as pt
+import matplotlib.pyplot as plt
+import numpy as np
 
 db_file = "database/pl3.db"
 
@@ -187,8 +189,8 @@ def replaceCount(begin=0, index=0, step=1, ai=0, col="SortData"):
     _data = _db.table('pl3').findAll()
     _pridata = [0] * 1000
     sumcount = 0
-    if step == -1:
-        index -= 1
+    if step < 0:
+        index -= step
     for i in range(begin, index, step):
         _pridata[int(_data[i][col])] += 1
     for i in range(1000):
@@ -208,8 +210,8 @@ def CalBSaOE(begin=0, index=0, step=1, strChose="BS", ai=0):
     _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     ans = [0] * 4
-    if step == -1:
-        index -= 1
+    if step < 0:
+        index -= step
     for i in range(begin, index, step):
         tmp = _data[i][strChose].split(':')
         # print(tmp)
@@ -229,6 +231,23 @@ def CalBSaOE(begin=0, index=0, step=1, strChose="BS", ai=0):
     else:
         strans = [ans[0] / abs(index - begin) * 100, ans[1] / abs(index - begin) * 100, ans[2] / abs(index - begin) * 100, ans[3] / abs(index - begin) * 100]
         return strans
+
+def CalSum(begin=0, index=0, step=1, ai=0):
+    _db = sh.Connect(db_file)
+    _data = _db.table('pl3').findAll()
+    ans = [0] * 28
+    if step < 0:
+        index -= step
+    for i in range(begin, index, step):
+        ans[int(_data[i]["SumData"])] += 1
+    _db.close()
+    strAns = ""
+    if ai == 0:
+        for i in range(28):
+            strAns += str(i) + ": " + str(Decimal(ans[i] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%  "
+            if (i + 1) % 15 == 0:
+                strAns += "\r\n"
+    return strAns
 
 def DtoB(num):
     i = 0
@@ -508,6 +527,11 @@ def ProcessData(begin=0):
     print("近30期36比：" + str(CalTS(begin, begin + 30)))
     print("近10期36比：" + str(CalTS(begin, begin + 10)))
     print("")
+    print("近100期和值比：" + "\r\n" + str(CalSum(begin, begin + 100, 1, 0)))
+    print("近50期和值比：" + "\r\n" + str(CalSum(begin, begin + 50, 1, 0)))
+    print("近30期和值比：" + "\r\n" + str(CalSum(begin, begin + 30, 1, 0)))
+    print("近10期和值比：" + "\r\n" + str(CalSum(begin, begin + 10, 1, 0)))
+    print("")
     # 0小 1大
     print("近100期按位大小比: " + str(CalBSSaOES(begin, begin + 100, "BSS")))
     print("近50期按位大小比: " + str(CalBSSaOES(begin, begin + 50, "BSS")))
@@ -582,10 +606,50 @@ def CalMKP(index=0):
     pt.TorchProcess(mkplist, 10)
     _db.close()  
 
+def CreateIMG(begin=0, index=0, step=1, strChose="BS", ai=0):
+    _db = sh.Connect(db_file)
+    _data = _db.table('pl3').findAll()
+    if step < 0:
+        index -= step
+    x = np.array([np.datetime64("1900-01-01")] * abs(index - begin))
+    y = np.array([0] * abs(index - begin))
+    for i in range(begin, index, step):
+        # ans[int(_data[i]["SumData"])] += 1
+        # x = np.append(x, np.datetime64(_data[i]["OriDate"]))
+        # y = np.append(y, int(_data[i]["SumData"]))
+        x[i] = np.datetime64(_data[i]["OriDate"])
+        y[i] = int(_data[i]["SumData"])
+    _db.close()
+    # plt.scatter(x, y, s=1)
+    plt.plot(x, y)
+    plt.grid()
+    plt.show()
+
+def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10):
+    _db = sh.Connect(db_file)
+    _data = _db.table('pl3').findAll()
+    if step < 0:
+        index -= step
+    ans = [0] * 2
+    totalB = 0
+    totalS = 0
+    for i in range(begin, index - 1, step):
+        if int(_data[i]["SumData"]) >= 20:
+            totalB += 1 
+            if int(_data[i + 1]["SumData"]) < int(_data[i]["SumData"]):
+                ans[1] += 1
+        elif int(_data[i]["SumData"]) <= 10:
+            totalS += 1
+            if int(_data[i + 1]["SumData"]) > int(_data[i]["SumData"]):
+                ans[0] += 1
+    _db.close()
+    print("极大数封顶概率：" + str(Decimal(ans[1] / totalB * 100).quantize(Decimal("0.00"))) + "%," + "极小数封底概率：" + str(Decimal(ans[0] / totalS * 100).quantize(Decimal("0.00"))) + "%")
+
+
 if __name__ == "__main__":
     while True:
         print("")
-        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性模型计算\n7.趋向性模型模拟\n9.退出\n")
+        select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性模型计算\n7.趋向性模型模拟\n8.绘制指定图像\n99.退出\n")
         if select == "1":
             crawler()
             print("-------------------------------------------")
@@ -605,5 +669,8 @@ if __name__ == "__main__":
         elif select == "7":
             num = int(input("输入预测期数："))
             CalMKP(num)
-        elif select == "9":
+        elif select == "8":
+            CalLimit(0, 5000, 1, 20, 10)
+            CreateIMG(0, 5000, 1, "BS", 0)
+        elif select == "99":
             break
