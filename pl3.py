@@ -355,7 +355,7 @@ def CalCurrent(n):
     print(strans)    
     _db.close()
 
-def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted=0, st=[], nd=[], rd=[], bss=[], oes=[]):
+def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted=0, st=[], nd=[], rd=[], bss=[], oes=[], sums=[14,15]):
     # 容错处理
     for i in range(len(tsp)):
         if tsp[i] == 3:
@@ -369,7 +369,9 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
         if index == -1:
             index = len(_used)
         for i in range(begin, index):
-            if _data[int(_used[i]["OriData"])] == 1:
+            if _used[i]["SumData"] not in sums:
+                _data[int(_used[i]["OriData"])] = 0
+            if _data[int(_used[i]["OriData"])] >= 1:
                 tmpran = random.randint(0, 100)
                 if tmpran <= replace:
                     _data[int(_used[i]["OriData"])] = 0
@@ -558,6 +560,7 @@ def ForecastData(begin=0):
     bigsmall = list(map(int, input("大小比：").split(",")))
     oddeven = list(map(int, input("奇偶比：").split(",")))
     ts = list(map(int, input("36比：").split(",")))
+    sums = list(map(int, input("和值比：").split(",")))
     st = list(map(int, input("杀百位：").split(",")))
     nd = list(map(int, input("杀十位：").split(",")))
     rd = list(map(int, input("杀个位：").split(",")))
@@ -625,28 +628,57 @@ def CreateIMG(begin=0, index=0, step=1, strChose="BS", ai=0):
     plt.grid()
     plt.show()
 
-def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10):
+def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10, select=-1):
     _db = sh.Connect(db_file)
     _data = _db.table('pl3').findAll()
     if step < 0:
         index -= step
-    ans = [0] * 2
-    totalB = 0
-    totalS = 0
+    ans = np.zeros([28, 5])
+    ansdetial = np.zeros([28, 3, 130])   
+    # totalB = 0
+    # totalS = 0
     for i in range(begin, index - 1, step):
-        if int(_data[i]["SumData"]) >= 20:
-            totalB += 1 
-            if int(_data[i + 1]["SumData"]) < int(_data[i]["SumData"]):
-                ans[1] += 1
-        elif int(_data[i]["SumData"]) <= 10:
-            totalS += 1
-            if int(_data[i + 1]["SumData"]) > int(_data[i]["SumData"]):
-                ans[0] += 1
+        if int(_data[i]["SumData"]) == 8:
+            print(int(_data[i]["SumData"]), int(_data[i + 1]["SumData"]))
+        ans[int(_data[i]["SumData"]), 0] += 1
+        if int(_data[i]["SumData"]) > int(_data[i + 1]["SumData"]):
+            ans[int(_data[i]["SumData"]), 1] += 1
+        elif int(_data[i]["SumData"]) == int(_data[i + 1]["SumData"]):
+            ans[int(_data[i]["SumData"]), 2] += 1
+        elif int(_data[i]["SumData"]) < int(_data[i + 1]["SumData"]):
+            ans[int(_data[i]["SumData"]), 3] += 1
+        diff = int(_data[i]["SumData"]) - int(_data[i + 1]["SumData"])
+        if diff > 0:
+            ansdetial[int(_data[i]["SumData"]), 0, diff] += 1
+        if diff == 0:
+            ansdetial[int(_data[i]["SumData"]), 1, diff] += 1
+        if diff < 0:
+            ansdetial[int(_data[i]["SumData"]), 2, abs(diff)] += 1
+        # if int(_data[i]["SumData"]) >= 20:
+        #     totalB += 1 
+        #     if int(_data[i + 1]["SumData"]) < int(_data[i]["SumData"]):
+        #         ans[1] += 1
+        # elif int(_data[i]["SumData"]) <= 10:
+        #     totalS += 1
+        #     if int(_data[i + 1]["SumData"]) > int(_data[i]["SumData"]):
+        #         ans[0] += 1
     _db.close()
-    print("极大数封顶概率：" + str(Decimal(ans[1] / totalB * 100).quantize(Decimal("0.00"))) + "%," + "极小数封底概率：" + str(Decimal(ans[0] / totalS * 100).quantize(Decimal("0.00"))) + "%")
-
-
+    # print("极大数封顶概率：" + str(Decimal(ans[1] / totalB * 100).quantize(Decimal("0.00"))) + "%," + "极小数封底概率：" + str(Decimal(ans[0] / totalS * 100).quantize(Decimal("0.00"))) + "%")
+    if select == -1:
+        for i in range(0, 28):
+            print(str(i) + ":  " + str(Decimal(ans[i, 1] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 2] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 3] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "% ")
+    else:
+        i = select
+        print(str(i) + ":  " + str(Decimal(ans[i, 1] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 2] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 3] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "% ")
+        print("\n")
+        print("封顶回归概率：")
+        for i in range(0, 28):
+            print(str(i) + ":  " + str(Decimal(ansdetial[i, 0, i] / ans[i, 1] * 100).quantize(Decimal("0.00"))) + "% ")
+        print("探底回归概率：")
+        for i in range(0, 28):
+            print(str(i) + ":  " + str(Decimal(ansdetial[i, 2, i] / ans[i, 3] * 100).quantize(Decimal("0.00"))) + "% ")
 if __name__ == "__main__":
+    np.seterr(invalid='ignore')
     while True:
         print("")
         select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性模型计算\n7.趋向性模型模拟\n8.绘制指定图像\n99.退出\n")
@@ -670,7 +702,7 @@ if __name__ == "__main__":
             num = int(input("输入预测期数："))
             CalMKP(num)
         elif select == "8":
-            CalLimit(0, 5000, 1, 20, 10)
-            CreateIMG(0, 5000, 1, "BS", 0)
+            CalLimit(0, 5000, 1, 20, 10, 8)
+            # CreateIMG(0, 5000, 1, "BS", 0)
         elif select == "99":
             break
