@@ -32,8 +32,15 @@ def intCheck36(num):
     for i in range(3):
         ans[int(strnum[i])] += 1
     for i in range(3):
-        if ans[i] == 3:
+        if ans[int(strnum[i])] == 3:
             return 0
-        elif ans[i] == 2:
+        elif ans[int(strnum[i])] == 2:
             return 1
     return 2
+
+def getSumNum(num):
+    ans = 0
+    while num > 0:
+        ans += num % 10
+        num //= 10
+    return ans

@@ -255,31 +255,32 @@ def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10, select=-1):
             print(str(i) + ":  " + str(Decimal(ansdetial[select, i] / ans[select, 0] * 100).quantize(Decimal("0.00"))) + "% ")
 
 def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted=0, st=[], nd=[], rd=[], bss=[], oes=[], sums=[14,15]):
+    _db = sh.Connect(init.db_file)
+    _used = _db.table('pl3').findAll()
     # 容错处理
     for i in range(len(tsp)):
         if tsp[i] == 3:
             tsp[i] = 1
         elif tsp[i] == 6:
             tsp[i] = 2
-    _data = [1] * 1000
-    if replace > 0:
-        _db = sh.Connect(init.db_file)
-        _used = _db.table('pl3').findAll()
-        if index == -1:
-            index = len(_used)
-        for i in range(begin, index):
-            if _used[i]["SumData"] not in sums:
-                _data[int(_used[i]["OriData"])] = 0
-            if _data[int(_used[i]["OriData"])] >= 1:
-                tmpran = random.randint(0, 100)
-                if tmpran <= replace:
-                    _data[int(_used[i]["OriData"])] = 0
-        _db.close()
+    if index == -1:
+        index = len(_used)
+    _data = [0] * 1000
     for i in range(1000):
-        if _data[i] == 1:
+        if ph.getSumNum(i) not in sums:
+            _data[i] = -1
+        else:
+            _data[i] += 1
+    for i in range(begin, index):
+        if replace > 0 and _data[int(_used[i]["OriData"])] >= 1: 
+            tmpran = random.randint(0, 100)
+            if tmpran <= replace:
+                _data[int(_used[i]["OriData"])] = -1 
+    for i in range(1000):
+        if _data[i] >= 0:
             if sorted == 1:
                 if(i // 100 > i // 10 % 10 or i // 10 % 10 > i % 10 or i // 100 > i % 10):
-                    _data[i] = 0
+                    _data[i] = -1
                     continue
             num = i
             bscnt = 0
@@ -315,7 +316,7 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
             else:
                 oescnt += "0"
             if first in st or second in nd or third in rd or bsscnt in bss or oescnt in oes:
-                _data[i] = 0
+                _data[i] = -1
                 continue
             while num > 0:
                 tmp = num % 10
@@ -326,27 +327,27 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
                     oecnt += 1
                 num //= 10
             if bscnt not in bsp or oecnt not in oep:
-                _data[i] = 0
+                _data[i] = -1
                 continue
             check = False
             for j in range(10):
                 if tscnt[j] == 3 and 0 not in tsp:
                     check = True
-                    _data[i] = 0
+                    _data[i] = -1
                     break
                 if tscnt[j] == 2 and 1 not in tsp:
                     check = True
-                    _data[i] = 0
+                    _data[i] = -1
                     break
             if (check is False and 2 not in tsp) or (1 not in tsp and i < 10):
-                _data[i] = 0
+                _data[i] = -1
     strans = ""
     cnt = 0
     cnts = [0] * 3
     scnt = [0] * 10
     stranss = [""] * 3
     for i in range(1000):
-        if _data[i] == 1:
+        if _data[i] >= 0:
             scnt[i // 100] += 1
             scnt[i // 10 % 10] += 1
             scnt[i % 10] += 1
@@ -376,6 +377,7 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
     else:     
         print("猜测结果共：" + str(cnt) + "个:")
         print(strans)
+    _db.close()
     # if sorted == 1:
     #     scnt.sort(reverse=True)
     #     for i in range(10):
@@ -394,3 +396,21 @@ def getLastSumData(select=0):
     _data = _db.table('pl3').findAll()
     _db.close()
     return _data[select]["SumData"]
+
+def getLastID():
+    _db = sh.Connect(init.db_file)
+    _data = _db.table('pl3').findAll()
+    _db.close()
+    return len(_data)
+
+def CalculateRepetitionRate():
+    # _db = sh.Connect(init.db_file)
+    # _data = _db.table('pl3').findAll()
+    # replaceCount(begin=0, index=0, step=1, ai=0, col="SortData")
+    # replaceCount(begin, begin + 100, 1, 0, "OriData")
+    RptRate = [0.00] * 4
+    SamplePropotion = [100, 50, 30, 10]
+    for i in range(len(SamplePropotion)):
+        RptRate[i] = replaceCount(0, SamplePropotion[i], step=1, ai=1, col="OriData")
+    # _db.close()
+    return RptRate
