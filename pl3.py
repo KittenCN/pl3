@@ -1,6 +1,6 @@
 import numpy as np
 import helper.CalculateHelper as ch
-# import helper.ProcessHelper as ph
+import helper.ProcessHelper as ph
 
 def ProcessData(begin=0):
     print("-------------------------------------------")
@@ -133,6 +133,6 @@ if __name__ == "__main__":
             ch.CalLimit(num, ch.getLastID(), 1, 20, 10, ch.getLastSumData(num))
             # CreateIMG(0, 5000, 1, "BS", 0)
         elif select == "9":
-            print(ch.CalculateRepetitionRate())
+            print(ph.intCheck36(156))
         elif select == "99":
             break
