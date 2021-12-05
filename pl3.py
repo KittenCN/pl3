@@ -1,21 +1,5 @@
-import helper.lxmlheper as lxmlheper
-import helper.SqliteHelper as sh
 import numpy as np
 import helper.CalculateHelper as ch
-import helper.init as init
-
-def crawler():
-    _db = sh.Connect(init.db_file)
-    _db.table('pl3').delete()
-    _db.table("sqlite_sequence").save({"seq": '0'})
-    _db.close()
-    lxmlheper.parse_one_page(lxmlheper.get_page())
-
-def getLastSumData(select=0):
-    _db = sh.Connect(init.db_file)
-    _data = _db.table('pl3').findAll()
-    _db.close()
-    return _data[select]["SumData"]
 
 def ProcessData(begin=0):
     print("-------------------------------------------")
@@ -94,7 +78,7 @@ if __name__ == "__main__":
         print("")
         select = input("请选择操作:\n1.爬取数据\n2.处理数据\n3.预测数据\n4.处理历史数据\n5.预测历史数据\n6.趋向性模型计算\n7.趋向性模型模拟\n8.绘制指定图像\n99.退出\n")
         if select == "1":
-            crawler()
+            ch.crawler()
             print("-------------------------------------------")
         elif select == "2":
             ProcessData(0)
@@ -121,7 +105,7 @@ if __name__ == "__main__":
                     num = int(select)
             else:
                 num = 0
-            ch.CalLimit(num, 5000, 1, 20, 10, getLastSumData(num))
+            ch.CalLimit(num, 5000, 1, 20, 10, ch.getLastSumData(num))
             # CreateIMG(0, 5000, 1, "BS", 0)
         elif select == "99":
             break

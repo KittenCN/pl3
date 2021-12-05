@@ -6,6 +6,7 @@ import helper.pytorch as pt
 import matplotlib.pyplot as plt
 import numpy as np
 import helper.init as init
+import helper.lxmlheper as lxmlheper
 
 def replaceCount(begin=0, index=0, step=1, ai=0, col="SortData"):
     _db = sh.Connect(init.db_file)
@@ -380,3 +381,16 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
     #     for i in range(10):
     #         if scnt[i] > 0:
     #             print(str(i) + " " + str(scnt[i]) + " " + str(Decimal((scnt[i] / (cnt * 3)) * 100).quantize(Decimal("0.00"))) + "%")
+
+def crawler():
+    _db = sh.Connect(init.db_file)
+    _db.table('pl3').delete()
+    _db.table("sqlite_sequence").save({"seq": '0'})
+    _db.close()
+    lxmlheper.parse_one_page(lxmlheper.get_page())
+
+def getLastSumData(select=0):
+    _db = sh.Connect(init.db_file)
+    _data = _db.table('pl3').findAll()
+    _db.close()
+    return _data[select]["SumData"]
