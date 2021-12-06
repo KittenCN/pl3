@@ -4,11 +4,14 @@ from bs4 import BeautifulSoup as bs
 import helper.SqliteHelper as sh
 import helper.init as init
 
-def get_page():
+def get_page(pl=3):
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'}
         # url = "http://www.lottery.gov.cn/historykj/history_" + str(i) + ".jspx?_ltype=pls"
-        url = "https://datachart.500.com/pls/history/inc/history.php?limit=15116&start=04001&end=99999"
+        if pl == 3:
+            url = "https://datachart.500.com/pls/history/inc/history.php?limit=15116&start=04001&end=99999"
+        else:
+            url = "https://datachart.500.com/plw/history/inc/history.php?limit=15116&start=04001&end=99999"
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
@@ -44,7 +47,7 @@ def parse_html(html):
         except IndexError:
             pass             
 
-def parse_one_page(get_html):
+def parse_one_page(get_html, pl=3):
     _db = sh.Connect(init.db_file)
     plsData = []
     if get_html is not None:
@@ -58,17 +61,23 @@ def parse_one_page(get_html):
             else:
                 item['six__selection'] = '0'
                 item['six__selection_bonus'] = '0'
-            strData = "".join(item['WinningNumbers'].split())
-            pls["OriIndex"] = item['issue']
-            pls["OriDate"] = item['time']
-            pls["OriData"] = strData
-            pls["SortData"] = getSortData(strData)
-            pls["SumData"] = getSumData(strData)
-            pls["OE"] = getOE(strData)
-            pls["BS"] = getBS(strData)
-            pls["TS"] = getTS(strData)
-            pls["BSS"] = getBSS(strData)
-            pls["OES"] = getOES(strData)
+            if pl == 3:
+                strData = "".join(item['WinningNumbers'].split())
+                pls["OriIndex"] = item['issue']
+                pls["OriDate"] = item['time']
+                pls["OriData"] = strData
+                pls["SortData"] = getSortData(strData)
+                pls["SumData"] = getSumData(strData)
+                pls["OE"] = getOE(strData)
+                pls["BS"] = getBS(strData)
+                pls["TS"] = getTS(strData)
+                pls["BSS"] = getBSS(strData)
+                pls["OES"] = getOES(strData)
+            elif pl == 5:
+                strData = "".join(item['WinningNumbers'].split())
+                pls["Pl5OriData"] = strData
+                pls["Pl5SortData"] = getSortData(strData)
+                pls["Pl5SumData"] = getSumData(strData)
             plsData.append(pls)
     _db.table('pl3').data(plsData).add()
     _db.close()
@@ -120,22 +129,22 @@ def getTS(_data):
             return 3
     return 6
 
-def getOE(_data):
+def getOE(_data, index=3):
     listData = list(_data)
     odd = 0
     even = 0
-    for i in range(3):
+    for i in range(index):
         if int(listData[i]) % 2 == 0:
             even += 1
         else:
             odd += 1
     return str(odd) + ":" + str(even)
 
-def getBS(_data):
+def getBS(_data, index=3):
     listData = list(_data)
     big = 0
     small = 0
-    for i in range(3):
+    for i in range(index):
         if int(listData[i]) < 5:
             small += 1
         else:
@@ -147,10 +156,10 @@ def getSortData(_data):
     listData.sort()
     return "".join(listData)
 
-def getSumData(_data):
+def getSumData(_data, index=3):
     listData = list(_data)
     SumData = 0
-    for i in range(3):
+    for i in range(index):
         SumData += int(listData[i])
     return SumData
 

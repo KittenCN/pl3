@@ -214,7 +214,7 @@ def CreateIMG(begin=0, index=0, step=1, strChose="BS", ai=0):
     plt.grid()
     plt.show()
 
-def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10, select=-1):
+def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10, select=-1, ai=0):
     _db = sh.Connect(init.db_file)
     _data = _db.table('pl3').findAll()
     if step < 0:
@@ -248,11 +248,17 @@ def CalLimit(begin=0, index=0, step=1, MaxN=20, MinN=10, select=-1):
         for i in range(0, 28):
             print(str(i) + ":  " + str(Decimal(ans[i, 1] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 2] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 3] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "% ")
     else:
-        i = select
-        print(str(i) + ":  " + str(Decimal(ans[i, 1] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 2] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 3] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "% ")
-        print("当前和值为" + str(select) + ",回归概率为：")
-        for i in range(0, 28):
-            print(str(i) + ":  " + str(Decimal(ansdetial[select, i] / ans[select, 0] * 100).quantize(Decimal("0.00"))) + "% ")
+        if ai == 0:
+            i = select
+            print(str(i) + ":  " + str(Decimal(ans[i, 1] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 2] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "%, " + str(Decimal(ans[i, 3] / ans[i, 0] * 100).quantize(Decimal("0.00"))) + "% ")
+            print("当前和值为" + str(select) + ",回归概率为：")
+            for i in range(0, 28):
+                print(str(i) + ":  " + str(Decimal(ansdetial[select, i] / ans[select, 0] * 100).quantize(Decimal("0.00"))) + "% ")
+        else:
+            listAns = []
+            for i in range(0, 28):
+                listAns.append(ansdetial[select, i] / ans[select, 0] * 100)
+            return listAns
 
 def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted=0, st=[], nd=[], rd=[], bss=[], oes=[], sums=[14,15]):
     _db = sh.Connect(init.db_file)
@@ -389,7 +395,7 @@ def crawler():
     _db.table('pl3').delete()
     _db.table("sqlite_sequence").save({"seq": '0'})
     _db.close()
-    lxmlheper.parse_one_page(lxmlheper.get_page())
+    lxmlheper.parse_one_page(lxmlheper.get_page(3))
 
 def getLastSumData(select=0):
     _db = sh.Connect(init.db_file)
@@ -403,14 +409,16 @@ def getLastID():
     _db.close()
     return len(_data)
 
-def CalculateRepetitionRate():
+def CalculateMuliteRate():
     # _db = sh.Connect(init.db_file)
     # _data = _db.table('pl3').findAll()
     # replaceCount(begin=0, index=0, step=1, ai=0, col="SortData")
     # replaceCount(begin, begin + 100, 1, 0, "OriData")
-    RptRate = [0.00] * 4
-    SamplePropotion = [100, 50, 30, 10]
+    # ch.CalLimit(num, 1000, 1, 20, 10, ch.getLastSumData(num))
+    RptRate = []
+    SamplePropotion = [getLastID(), 5000, 1000, 500]
     for i in range(len(SamplePropotion)):
-        RptRate[i] = replaceCount(0, SamplePropotion[i], step=1, ai=1, col="OriData")
+        # RptRate[i] = replaceCount(0, SamplePropotion[i], step=1, ai=1, col="OriData")
+        RptRate.append(CalLimit(0, SamplePropotion[i], 1, 20, 10, getLastSumData(0), 1))
     # _db.close()
     return RptRate

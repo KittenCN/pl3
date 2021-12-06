@@ -1,6 +1,7 @@
+from decimal import Decimal
 import numpy as np
 import helper.CalculateHelper as ch
-import helper.ProcessHelper as ph
+# import helper.ProcessHelper as ph
 
 def ProcessData(begin=0):
     print("-------------------------------------------")
@@ -130,9 +131,14 @@ if __name__ == "__main__":
                     num = int(select)
             else:
                 num = 0
-            ch.CalLimit(num, ch.getLastID(), 1, 20, 10, ch.getLastSumData(num))
+            ch.CalLimit(num, 1000, 1, 20, 10, ch.getLastSumData(num))
+            # ch.CalLimit(num, ch.getLastID(), 1, 20, 10, ch.getLastSumData(num))
             # CreateIMG(0, 5000, 1, "BS", 0)
         elif select == "9":
-            print(ph.intCheck36(156))
+            # print(ch.CalculateMuliteRate())
+            listA = ch.CalculateMuliteRate()
+            # str(Decimal((scnt[i] / (cnt * 3)) * 100).quantize(Decimal("0.00"))) + "%"
+            for i in range(28):
+                print(str(i) + ":     " + str(Decimal(listA[0][i]).quantize(Decimal("0.00"))) + "%     " + str(Decimal(listA[1][i]).quantize(Decimal("0.00"))) + "%" + "     " + str(Decimal(listA[2][i]).quantize(Decimal("0.00"))) + "%" + "     " + str(Decimal(listA[3][i]).quantize(Decimal("0.00"))) + "%")
         elif select == "99":
             break
