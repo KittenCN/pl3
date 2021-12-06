@@ -1,3 +1,4 @@
+# from numpy.lib.shape_base import split
 import helper.ProcessHelper as ph
 import helper.SqliteHelper as sh
 from decimal import Decimal
@@ -48,7 +49,7 @@ def CalBSaOE(begin=0, index=0, step=1, strChose="BS", ai=0):
         else:   
             ans[3] += 1
     # Decimal(ans[0] / index * 100).quantize(Decimal("0.00"))
-    strans = ("0:3 占比 " + str(Decimal(ans[0] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 1:2 占比 " + str(Decimal(ans[1] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 2:1 占比 " + str(Decimal(ans[2] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 3:0 占比 " + str(Decimal(ans[3] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%")
+    strans = ("0:3 占比 " + str(Decimal(ans[0] / abs(index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%" + ", 1:2 占比 " + str(Decimal(ans[1] / abs(index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%" + ", 2:1 占比 " + str(Decimal(ans[2] / abs(index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%" + ", 3:0 占比 " + str(Decimal(ans[3] / abs(index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%")
     _db.close()
     if ai == 0:
         return strans
@@ -66,11 +67,35 @@ def CalSum(begin=0, index=0, step=1, ai=0):
         ans[int(_data[i]["SumData"])] += 1
     _db.close()
     strAns = ""
+    listAns = []
     if ai == 0:
         for i in range(28):
             strAns += str(i) + ": " + str(Decimal(ans[i] / abs(index - begin) * 100).quantize(Decimal("0.00"))) + "%  "
             if (i + 1) % 15 == 0:
                 strAns += "\r\n"
+                return strAns
+    elif ai == 1:
+        for i in range(28):
+            listAns.append(Decimal(ans[i] / abs(index - begin) * 100).quantize(Decimal("0.00")))
+        return listAns
+    
+
+def CalMuliteSum(begin=0, step=1, Mul=[]):
+    # CalSum(begin, begin + 1000, 1, 0)
+    listAns = []
+    strAns = ""
+    splitnum = 15 // len(Mul)
+    for i in range(len(Mul)):
+        listAns.append(CalSum(begin, begin + Mul[i], step, 1))
+    for i in range(28):
+        if i < 10:
+            strAns += "0"
+        strAns += str(i) + ": "
+        for j in range(len(Mul)):
+            strAns += str(listAns[j][i]).rjust(5) + "%  "
+        strAns += "|"
+        if (i + 1) % splitnum == 0:
+            strAns += "\r\n"
     return strAns
 
 def CalBSSaOES(begin, index, strChose="BSS"):
@@ -83,7 +108,7 @@ def CalBSSaOES(begin, index, strChose="BSS"):
     for i in range(8):
         # if i == 4:
         #     strans += '\r\n'
-        strans += ph.BtoD(i) + "占比: " + str(Decimal(ans[i] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%"
+        strans += ph.BtoD(i) + "占比: " + str(Decimal(ans[i] / (index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%"
         if i != 7:
             strans += ", "
     return strans
@@ -99,7 +124,7 @@ def CalTS(begin=0, index=0):
             ans[1] += 1
         else:
             ans[2] += 1
-    strans = ("豹子占比 " + str(Decimal(ans[0] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 组合3占比 " + str(Decimal(ans[1] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%" + ", 组合6占比 " + str(Decimal(ans[2] / (index - begin) * 100).quantize(Decimal("0.00"))) + "%")
+    strans = ("豹子占比 " + str(Decimal(ans[0] / (index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%" + ", 组合3占比 " + str(Decimal(ans[1] / (index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%" + ", 组合6占比 " + str(Decimal(ans[2] / (index - begin) * 100).quantize(Decimal("0.00"))).rjust(5) + "%")
     _db.close()
     return strans
 
@@ -422,3 +447,12 @@ def CalculateMuliteRate():
         RptRate.append(CalLimit(0, SamplePropotion[i], 1, 20, 10, getLastSumData(0), 1))
     # _db.close()
     return RptRate
+
+def getSomething(begin=0, end=100, step=1, ai=0, col="SortData"):
+    _db = sh.Connect(init.db_file)
+    _data = _db.table('pl3').findAll()
+    _db.close()
+    listAns = []
+    for i in range(begin, end, step):
+        listAns.append([int(_data[i][col])])
+    return listAns
