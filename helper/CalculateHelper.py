@@ -79,7 +79,6 @@ def CalSum(begin=0, index=0, step=1, ai=0):
             listAns.append(Decimal(ans[i] / abs(index - begin) * 100).quantize(Decimal("0.00")))
         return listAns
     
-
 def CalMuliteSum(begin=0, step=1, Mul=[]):
     # CalSum(begin, begin + 1000, 1, 0)
     listAns = []
