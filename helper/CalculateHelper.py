@@ -307,6 +307,8 @@ def Guess(begin=0, index=-1, replace=10, bsp=[0,1,2], oep=[1,2], tsp=[2], sorted
             tmpran = random.randint(0, 100)
             if tmpran <= replace:
                 _data[int(_used[i]["OriData"])] = -1 
+        elif replace == 0 and _data[int(_used[i]["OriData"])] >= 1:
+            _data[int(_used[i]["OriData"])] = -1
     for i in range(1000):
         if _data[i] >= 0:
             if sorted == 1:

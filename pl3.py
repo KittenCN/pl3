@@ -57,7 +57,7 @@ def ProcessData(begin=0):
     # print("近30期和值比：" + "\r\n" + str(ch.CalSum(begin, begin + 30, 1, 0)))
     # print("近10期和值比：" + "\r\n" + str(ch.CalSum(begin, begin + 10, 1, 0)))
     Mul = [ch.getLastID(), 5000, 1000, 100, 50, 30, 10]
-    print("多期和值比(" + Mul + "):")
+    print("多期和值比(" + str(Mul) + "):")
     print(ch.CalMuliteSum(0, 1, Mul))
     print("")
     # 0小 1大
