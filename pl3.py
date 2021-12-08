@@ -1,8 +1,8 @@
-# from decimal import Decimal
+from decimal import Decimal
 import numpy as np
 import helper.CalculateHelper as ch
 # import helper.ProcessHelper as ph
-import helper.AlgorithmHelper as ah
+# import helper.AlgorithmHelper as ah
 
 def ProcessData(begin=0):
     print("-------------------------------------------")
@@ -145,14 +145,20 @@ if __name__ == "__main__":
             # for i in range(28):
             #     print(str(i) + ":     " + str(Decimal(listA[0][i]).quantize(Decimal("0.00"))) + "%     " + str(Decimal(listA[1][i]).quantize(Decimal("0.00"))) + "%" + "     " + str(Decimal(listA[2][i]).quantize(Decimal("0.00"))) + "%" + "     " + str(Decimal(listA[3][i]).quantize(Decimal("0.00"))) + "%")
             y_train = []
-            for i in range(1015, -1, -30):
-                listT = ch.CalLimit(i, i - 30, -1, 20, 10, -1, 1)
+            lastnum = ch.getLastSumData(0)
+            for i in range(1029, -1, -50):
+                listT = ch.CalLimit(i, i - 50, -1, 20, 10, lastnum, 1)
                 y_train.append(listT)
             # y_train = ch.getSomething(999, -1, -1, 0, "SumData")
-            x_train = [i for i in range(len(y_train))]
+            for i in range(28):
+                strAns = ""
+                strAns += (str(i) + ": ").ljust(5)
+                for j in range(len(y_train)):
+                    strAns += (str(Decimal(y_train[j][i]).quantize(Decimal("0.00"))) + "% ").rjust(7)
+                strAns += "\r\n"
+                print(strAns)
             # x_test = ch.getSomething(199, 100, -1, 0, "OriIndex")
             # y_test = ch.getSomething(199, 100, -1, 0, "SumData")
-            ah.show_data(x_train, y_train)
             # ah.NonlinearRegressionFitting(x_train, y_train, x_test, y_test)
         elif select == "99":
             break

@@ -178,7 +178,8 @@ def CalCurrent(n):
         strans += ph.BtoD(i) + "占比: " + str(Decimal(oesans[i] / sortcnt * 100).quantize(Decimal("0.00"))) + "%"
         if i != 7:
             strans += ", "   
-    print(strans)    
+    print(strans)
+    # CalLimit(0, 1000, 1, 20, 10, getLastSumData(0))    
     _db.close()
 
 def CalMK(index=0):
