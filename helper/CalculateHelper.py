@@ -78,6 +78,29 @@ def CalSum(begin=0, index=0, step=1, ai=0):
         for i in range(28):
             listAns.append(Decimal(ans[i] / abs(index - begin) * 100).quantize(Decimal("0.00")))
         return listAns
+
+def calNumRate(begin=0, index=0, step=1, ai=0):
+    _db = sh.Connect(init.db_file)
+    _data = _db.table('pl3').findAll()
+    ans = np.zeros([3, 28])
+    num = [0] * 3
+    listAns = []
+    if step < 0:
+        index -= step
+    for i in range(begin, index, step):
+        oridata = int(_data[i]["OriData"])
+        if oridata > 99:
+            num[0] = oridata // 100
+        if oridata > 9:
+            num[1] = oridata // 10 % 10
+        num[2] = oridata % 10
+        for j in range(3):
+            ans[j][num[j]] += 1
+    if ai == 1:
+        for i in range(3):
+            for j in range(28):
+                listAns[i].append(Decimal(ans[i][j] / abs(index - begin) * 3 * 100).quantize(Decimal("0.00")))
+        return listAns
     
 def CalMuliteSum(begin=0, step=1, Mul=[]):
     # CalSum(begin, begin + 1000, 1, 0)
