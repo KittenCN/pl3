@@ -155,7 +155,6 @@ if __name__ == "__main__":
                 strAns += (str(i) + ": ").ljust(5)
                 for j in range(len(y_train)):
                     strAns += (str(Decimal(y_train[j][i]).quantize(Decimal("0.00"))) + "% ").rjust(7)
-                strAns += "\r\n"
                 print(strAns)
             # x_test = ch.getSomething(199, 100, -1, 0, "OriIndex")
             # y_test = ch.getSomething(199, 100, -1, 0, "SumData")
