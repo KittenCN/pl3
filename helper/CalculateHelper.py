@@ -179,7 +179,9 @@ def CalCurrent(n):
         if i != 7:
             strans += ", "   
     print(strans)
-    # CalLimit(0, 1000, 1, 20, 10, getLastSumData(0))    
+    # CalLimit(0, 1000, 1, 20, 10, getLastSumData(0))  
+    print("下期和值比例： ")
+    print(listCalChoiceSumRate(1029,-1,-50,9))  
     _db.close()
 
 def CalMK(index=0):
@@ -458,3 +460,17 @@ def getSomething(begin=0, end=100, step=1, ai=0, col="SortData"):
     for i in range(begin, end, step):
         listAns.append([int(_data[i][col])])
     return listAns
+
+def listCalChoiceSumRate(begin=1029, end=-1, step=-50, ai=0):
+    y_train = []
+    lastnum = getLastSumData(0)
+    for i in range(begin, end, step):
+        listT = CalLimit(i, i + (step), -1, 20, 10, lastnum, 1)
+        y_train.append(listT)
+    strAns = ""
+    for i in range(28):
+        strAns += (str(i) + ": ").ljust(5)
+        for j in range(len(y_train)):
+            strAns += (str(Decimal(y_train[j][i]).quantize(Decimal("0.00"))) + "% ").rjust(8)
+        strAns += "\r\n"
+    return strAns
