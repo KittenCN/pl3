@@ -13,21 +13,21 @@ class net(nn.Module):
         super(net, self).__init__()
         # o = (h + 2p - k) / s + 1
         # o = (h - k) / s + 1
-        self.conv1 = nn.Conv2d(1, 6, 3, 1, 2)  # 30 * 5 * 1
+        self.conv1 = nn.Conv2d(1, 6, 2, 1, 1)  # 29 * 5 * 1
         self.maxpool = nn.MaxPool2d(2, 2) 
-        self.conv2 = nn.Conv2d(6, 16, 2)  
-        self.fc1 = nn.Linear(7 * 1 * 16, 1024)  
+        self.conv2 = nn.Conv2d(6, 16, 2, 1, 1)  
+        self.fc1 = nn.Linear(8 * 2 * 16, 1024)  
         self.fc2 = nn.Linear(1024, 512)  
         self.fc3 = nn.Linear(512, 5)  
 
     def forward(self, x):
-        x = self.conv1(x)  # 30 * 5 * 1 -> 32 * 7 * 6
+        x = self.conv1(x)  # 29 * 5 * 1 -> 30 * 6 * 6
         x = F.relu(x)
-        x = self.maxpool(x)  # 32 * 7 * 6 -> 16 * 3 * 16
-        x = self.conv2(x)  # 16 * 3 * 16 -> 15 * 2 * 16
+        x = self.maxpool(x)  # 30 * 6 * 6 -> 15 * 3 * 16
+        x = self.conv2(x)  # 15 * 3 * 16 -> 16 * 4 * 16
         x = F.relu(x)
-        x = self.maxpool(x)  # 15 * 2 * 16 -> 7 * 1 * 16
-        x = x.view(-1, 7 * 1 * 16)  
+        x = self.maxpool(x)  # 16 * 4 * 16 -> 8 * 2 * 16
+        x = x.view(-1, 8 * 2 * 16)  
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -61,7 +61,7 @@ pklfile = r"./lnc.pkl"
 _db = sh.Connect(db_file)
 _data = _db.table('oridata').order('no').findAll()
 _db.close()
-splitnum = 30
+splitnum = 29
 testnum = 100
 ori_in = []
 ori_out = []
@@ -110,6 +110,10 @@ for epoch in range(epochs):
         input = inputs.to(device)
         target = targets.to(device)
         output = model(input)
+        # _out = output.clone()
+        # for x, item_x in enumerate(_out):
+        #     for y, item_y in enumerate(item_x):
+        #         output[x][y] = torch.round(output[x][y])
         loss = loss_func(output, target)
         optimizer.zero_grad()
         loss.backward()
