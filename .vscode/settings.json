@@ -2,5 +2,5 @@
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": true,
     "python.formatting.provider": "yapf",
-    "python.linting.flake8Args": ["--ignore=E231,E501,W291,W292,W391,E302,E265,E305,E301,W293"]
+    "python.linting.flake8Args": ["--ignore=E231,E501,W291,W292,W391,E302,E265,E305,E301,W293,F401,F811"]
 }
